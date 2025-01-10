@@ -28,7 +28,7 @@ jobs:
         run: |
            curl --request PATCH \
                --url https://api.datawrapper.de/v3/charts/TJGRP \
-               --header "Authorization: Bearer $DW_KEY" \
+               --header "Authorization: Bearer ${{ secrets.DW_KEY }}" \
                --header 'content-type: application/json' \
                --data "{ \"metadata\": {\"annotate\": {\"notes\": \"Letzte Datenaktualisierung: $(date +'%d.%m.%Y')\"}}}"
 
