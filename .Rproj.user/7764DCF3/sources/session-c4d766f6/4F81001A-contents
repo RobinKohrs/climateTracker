@@ -1,3 +1,4 @@
+name: daily global temperature anomaly
 on:
   push:
     branches: main
