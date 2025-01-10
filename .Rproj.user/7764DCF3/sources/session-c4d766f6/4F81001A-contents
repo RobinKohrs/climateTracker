@@ -19,7 +19,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      - name: Import data
+      - name: Get and Write Data
         run: Rscript -e 'source("daily_global_anomalies.R")'
 
       - name: Commit results

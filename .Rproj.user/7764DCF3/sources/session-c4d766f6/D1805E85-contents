@@ -37,5 +37,7 @@ if(!dir.exists(output_dir)){
   dir.create(output_dir, recursive = T)
 }
 
+print(head(result))
+
 output_file = file.path(output_dir, "daily_global_anomalies.csv")
 write.csv(result, output_file)
