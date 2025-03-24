@@ -27,7 +27,7 @@ jobs:
       - name: Update Datawrapper Chart Notes
         run: |
            curl --request PATCH \
-               --url https://api.datawrapper.de/v3/charts/TJGRP \
+               --url https://api.datawrapper.de/v3/charts/OAVPA \
                --header "Authorization: Bearer ${{ secrets.DW_KEY }}" \
                --header 'content-type: application/json' \
                --data "{ \"metadata\": {\"annotate\": {\"notes\": \"Letzte Datenaktualisierung: $(date +'%d.%m.%Y')\"}}}"
