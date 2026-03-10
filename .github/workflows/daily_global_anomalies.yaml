@@ -29,7 +29,7 @@ jobs:
       - name: Update Datawrapper Chart Notes
         run: |
           curl --request PATCH \
-            --url https://api.datawrapper.de/v3/charts/TJGRP \
+            --url https://api.datawrapper.de/v3/charts/yOtYK \
             --header "Authorization: Bearer ${{ secrets.DW_KEY }}" \
             --header 'content-type: application/json' \
             --data "{ \"metadata\": {\"annotate\": {\"notes\": \"Letzte Datenaktualisierung: $(date +'%d.%m.%Y')\"}}}"
@@ -37,7 +37,7 @@ jobs:
       - name: Publish Datawrapper Chart
         run: |
           curl --request POST \
-            --url https://api.datawrapper.de/v3/charts/TJGRP/publish \
+            --url https://api.datawrapper.de/v3/charts/yOtYK/publish \
             --header "Authorization: Bearer ${{ secrets.DW_KEY }}" \
             --header 'accept: application/json'
 
