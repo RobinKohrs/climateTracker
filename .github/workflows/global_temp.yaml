@@ -24,18 +24,30 @@ jobs:
       - name: Get and Write Data
         run: Rscript -e 'source("different_models_global_temp.R")'
 
-      - name: Update Datawrapper Chart Notes
-        run: |
-           curl --request PATCH \
-               --url https://api.datawrapper.de/v3/charts/OAVPA \
-               --header "Authorization: Bearer ${{ secrets.DW_KEY }}" \
-               --header 'content-type: application/json' \
-               --data "{ \"metadata\": {\"annotate\": {\"notes\": \"Letzte Datenaktualisierung: $(date +'%d.%m.%Y')\"}}}"
-
+      # Erst pushen: OAVPA liest die CSV direkt von GitHub (externe Daten)
       - name: Commit results
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
           git add -A
           git commit -m 'Data updated' || echo "No changes to commit"
-          git push origin || echo "No changes to commit"
+          # Andere Workflows pushen ins selbe Repo, daher vorher rebasen
+          git pull --rebase origin main
+          git push origin HEAD:main || echo "No changes to commit"
+
+      # Anmerkung kommt aus different_models_global_temp.R. Ohne das
+      # Veröffentlichen landet sie nur im Entwurf, nie in der Live-Grafik.
+      - name: Update notes and republish Datawrapper chart
+        env:
+          DW_KEY: ${{ secrets.DW_KEY }}
+        run: |
+          note=$(jq -Rs '{metadata: {annotate: {notes: (. | rtrimstr("\n"))}}}' output/merged_data/datawrapper_note.txt)
+          curl --fail --request PATCH \
+            --url https://api.datawrapper.de/v3/charts/OAVPA \
+            --header "Authorization: Bearer $DW_KEY" \
+            --header 'content-type: application/json' \
+            --data "$note"
+
+          curl --fail --request POST \
+            --url https://api.datawrapper.de/v3/charts/OAVPA/publish \
+            --header "Authorization: Bearer $DW_KEY"

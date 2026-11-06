@@ -62,5 +62,18 @@ if (!dir.exists(output_dir)) {
 output_file = file.path(output_dir, "merged_models_data.csv")
 write.csv(merged_data, output_file, row.names = FALSE)
 
+# Anmerkung für die Datawrapper-Grafik OAVPA. Das Met Office führt das
+# laufende Jahr schon als Jahreswert, gemittelt über die bisherigen Monate.
+# Das muss unter der Grafik stehen, sonst liest man es als ganzes Jahr.
+letztes_jahr = max(merged_data$Year)
+note = paste0("Letzte Datenaktualisierung: ", format(Sys.Date(), "%d.%m.%Y"), ".")
+if (letztes_jahr >= as.integer(format(Sys.Date(), "%Y"))) {
+  note = paste0(
+    note, " Der Wert für <strong>", letztes_jahr,
+    "</strong> beruht nur auf den bisherigen Monaten des Jahres."
+  )
+}
+writeLines(note, file.path(output_dir, "datawrapper_note.txt"))
+
 # Print the first few rows of the result
 print(head(merged_data))
