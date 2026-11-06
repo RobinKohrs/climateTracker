@@ -1,0 +1,66 @@
+name: CO2 Keeling-Kurve
+on:
+  workflow_dispatch:
+  schedule:
+    # NOAA aktualisiert monatlich, meist in den ersten Tagen des Monats.
+    # Täglich prüfen kostet nichts, committet wird nur bei Änderungen.
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  update-co2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Get and write data
+        run: Rscript co2_keeling.R
+
+      - name: Commit results
+        id: commit
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add output/co2
+          if git diff --staged --quiet; then
+            echo "Keine neuen CO2-Daten"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "CO2 data updated"
+            # Andere Workflows pushen ins selbe Repo, daher vorher rebasen
+            git pull --rebase origin main
+            git push origin HEAD:main
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Läuft nur, wenn es neue Daten gibt und die Repo-Variable
+      # DW_CHART_ID_CO2 gesetzt ist (Settings → Secrets and variables →
+      # Actions → Variables). Der API-Key ist das bestehende Secret DW_KEY.
+      - name: Update and republish Datawrapper chart
+        if: steps.commit.outputs.changed == 'true' && vars.DW_CHART_ID_CO2 != ''
+        env:
+          DW_KEY: ${{ secrets.DW_KEY }}
+          CHART_ID: ${{ vars.DW_CHART_ID_CO2 }}
+        run: |
+          curl --fail --request PUT \
+            --url "https://api.datawrapper.de/v3/charts/$CHART_ID/data" \
+            --header "Authorization: Bearer $DW_KEY" \
+            --header "content-type: text/csv" \
+            --data-binary @output/co2/co2_mauna_loa_monthly.csv
+
+          note=$(jq -Rs '{metadata: {annotate: {notes: (. | rtrimstr("\n"))}}}' output/co2/datawrapper_note.txt)
+          curl --fail --request PATCH \
+            --url "https://api.datawrapper.de/v3/charts/$CHART_ID" \
+            --header "Authorization: Bearer $DW_KEY" \
+            --header "content-type: application/json" \
+            --data "$note"
+
+          curl --fail --request POST \
+            --url "https://api.datawrapper.de/v3/charts/$CHART_ID/publish" \
+            --header "Authorization: Bearer $DW_KEY"
