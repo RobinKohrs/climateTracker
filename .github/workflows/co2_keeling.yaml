@@ -52,7 +52,7 @@ jobs:
             --url "https://api.datawrapper.de/v3/charts/$CHART_ID/data" \
             --header "Authorization: Bearer $DW_KEY" \
             --header "content-type: text/csv" \
-            --data-binary @output/co2/co2_mauna_loa_monthly.csv
+            --data-binary @output/co2/datawrapper_data.csv
 
           note=$(jq -Rs '{metadata: {annotate: {notes: (. | rtrimstr("\n"))}}}' output/co2/datawrapper_note.txt)
           curl --fail --request PATCH \

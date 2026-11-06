@@ -22,6 +22,7 @@
 source_url = "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.csv"
 output_dir = "output/co2"
 output_file = file.path(output_dir, "co2_mauna_loa_monthly.csv")
+datawrapper_file = file.path(output_dir, "datawrapper_data.csv")
 note_file = file.path(output_dir, "datawrapper_note.txt")
 
 co2_raw = read.csv(source_url, comment.char = "#", check.names = FALSE)
@@ -66,6 +67,16 @@ co2 = data.frame(
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 write.csv(co2, output_file, row.names = FALSE)
 
+# Eigene, schlanke Datei für Datawrapper. Die Spaltennamen sind zugleich die
+# Schlüssel der Linien-Einstellungen im Chart (lines.Monatsmittel usw.) und
+# dürfen sich daher nicht ändern.
+co2_datawrapper = data.frame(
+  Datum = co2$datum,
+  Monatsmittel = co2$monatsmittel_ppm,
+  Trend = co2$saisonbereinigt_ppm
+)
+write.csv(co2_datawrapper, datawrapper_file, row.names = FALSE, quote = FALSE)
+
 
 # Anmerkungstext für Datawrapper --------------------------------------------
 # Monatsnamen fest auf Deutsch, damit das Ergebnis nicht vom Locale des
@@ -77,11 +88,12 @@ monate = c(
 )
 letzte_zeile = co2_raw[nrow(co2_raw), ]
 
+# Messort und Scripps stehen schon in Untertitel und Quellenzeile
 note = paste0(
-  "Monatsmittel am Mauna Loa (Hawaii), bis 1974 Messungen der Scripps ",
-  "Institution of Oceanography. Dezember 2022 bis Juli 2023 Messungen vom ",
-  "nahen Maunakea, weil der Mauna Loa ausgebrochen war. Letzter Messwert: ",
-  monate[letzte_zeile$month], " ", letzte_zeile$year, "."
+  "Letzter Messwert: <strong>", monate[letzte_zeile$month], " ",
+  letzte_zeile$year, "</strong>. Von Dezember 2022 bis Juli 2023 wurde am ",
+  "nahen Maunakea gemessen, weil der Mauna Loa ausgebrochen war. Der ",
+  "vorindustrielle Wert von rund 280 ppm stammt aus Eisbohrkernen."
 )
 writeLines(note, note_file)
 
