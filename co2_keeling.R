@@ -25,7 +25,30 @@ output_file = file.path(output_dir, "co2_mauna_loa_monthly.csv")
 datawrapper_file = file.path(output_dir, "datawrapper_data.csv")
 note_file = file.path(output_dir, "datawrapper_note.txt")
 
-co2_raw = read.csv(source_url, comment.char = "#", check.names = FALSE)
+download_noaa_csv = function(url, attempts = 3L, retry_delay = 5) {
+  path = tempfile()
+  on.exit(unlink(path))
+
+  for (attempt in seq_len(attempts)) {
+    unlink(path)
+    status = tryCatch(
+      utils::download.file(url, path, method = "libcurl", quiet = TRUE, mode = "wb"),
+      error = function(e) NA_integer_
+    )
+    if (isTRUE(status == 0L) && file.exists(path) && isTRUE(file.info(path)$size > 0)) {
+      return(read.csv(path, comment.char = "#", check.names = FALSE))
+    }
+
+    if (attempt < attempts) {
+      message("NOAA CSV download failed (attempt ", attempt, " of ", attempts, "); retrying in ", retry_delay, " seconds.")
+      Sys.sleep(retry_delay)
+    }
+  }
+
+  stop("Could not download NOAA CO2 data after ", attempts, " attempts: ", url)
+}
+
+co2_raw = download_noaa_csv(source_url)
 
 
 # Plausibilitätsprüfungen ---------------------------------------------------
